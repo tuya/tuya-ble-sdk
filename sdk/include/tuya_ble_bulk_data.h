@@ -81,6 +81,12 @@ tuya_ble_status_t tuya_ble_bulk_data_response(tuya_ble_bulk_data_response_t *p_d
  */
 void tuya_ble_handle_bulk_data_evt(tuya_ble_evt_param_t *p_evt);
 
+/**@brief   Function for request read bulk data.
+ *
+ *
+ * @param[in] p_data    The pointer to the bulk data information.
+ */
+tuya_ble_status_t tuya_ble_bulk_data_read_request(tuya_ble_bulk_data_req_t *p_data);
 
 
 #ifdef __cplusplus

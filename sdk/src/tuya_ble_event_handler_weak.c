@@ -189,5 +189,10 @@ __TUYA_BLE_WEAK void tuya_ble_handle_weather_data_request_evt(tuya_ble_evt_param
    
 }
 
+__TUYA_BLE_WEAK void tuya_ble_handle_scene_request_evt(tuya_ble_evt_param_t *evt)
+{
+   
+}
+
 
 

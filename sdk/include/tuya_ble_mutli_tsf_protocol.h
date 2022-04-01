@@ -40,7 +40,7 @@ extern "C" {
 /***********************************************************
 *************************micro define***********************
 ***********************************************************/
-#define SNGL_PKG_TRSFR_LMT  TUYA_BLE_DATA_MTU_MAX // single package transfer limit
+#define SNGL_PKG_TRSFR_LMT  512//TUYA_BLE_DATA_MTU_MAX // single package transfer limit
 
 //#define FRM_TYPE_OFFSET (0x0f << 4)
 #define FRM_VERSION_OFFSET (0x0f << 4)

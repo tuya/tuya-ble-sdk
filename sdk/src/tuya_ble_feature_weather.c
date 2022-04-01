@@ -40,7 +40,7 @@
 #include "tuya_ble_log.h"
 #include "tuya_ble_gatt_send_queue.h"
 
-#if ( (TUYA_BLE_PROTOCOL_VERSION_HIGN==4) && (TUYA_BLE_FEATURE_WEATHER_ENABLE != 0) )
+#if ( (TUYA_BLE_PROTOCOL_VERSION_HIGN >= 4) && (TUYA_BLE_FEATURE_WEATHER_ENABLE != 0) )
 
 /**@brief   Weather key string. */
 const char *weather_key[] = {
@@ -191,7 +191,7 @@ static tuya_ble_status_t weather_data_lktlv_parse(uint8_t *in, uint16_t in_len, 
 
     tuya_ble_weather_key_type_t weather_type;
     tuya_ble_weather_value_type_t value_type;
-    tuya_ble_wd_object_t *object;
+    tuya_ble_wd_object_t *object = NULL;
     uint16_t tmp_out_len = 0, tmp_object_nums = 0;
 
     if (in == NULL || in_len == 0 || out == NULL || out_len == NULL || object_nums == NULL)
@@ -423,7 +423,7 @@ void tuya_ble_handle_weather_data_received(uint8_t*recv_data, uint16_t recv_len)
     weather_data_start_pos = 15;
     weather_data_len = (data_len - 2);
 
-    uint8_t *ble_cb_evt_buffer = (uint8_t*)tuya_ble_malloc(weather_data_len);
+    uint8_t *ble_cb_evt_buffer = (uint8_t*)tuya_ble_malloc(weather_data_len*2);
     if (ble_cb_evt_buffer == NULL)
     {
         TUYA_BLE_LOG_ERROR("ble_cb_evt_buffer malloc failed.");

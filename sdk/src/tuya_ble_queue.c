@@ -26,7 +26,7 @@
 #include "tuya_ble_queue.h"
 #include "tuya_ble_type.h"
 
-tuya_ble_status_t tuya_ble_queue_init(tuya_ble_queue_t *q, void *buf, uint8_t queue_size, uint8_t elem_size)
+tuya_ble_status_t tuya_ble_queue_init(tuya_ble_queue_t *q, void *buf, uint16_t queue_size, uint16_t elem_size)
 {
     if (buf == NULL || q == NULL)
         return TUYA_BLE_ERR_INVALID_PARAM;

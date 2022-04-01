@@ -216,7 +216,7 @@ void *pvTuyaPortMalloc( uint32_t xWantedSize )
 
         tuya_traceMALLOC( pvReturn, xWantedSize );
     }
-    ( void ) tuya_ble_device_exit_critical();
+    tuya_ble_device_exit_critical();
 
 #if( tuyaUSE_MALLOC_FAILED_HOOK == 1 )
     {
@@ -270,7 +270,7 @@ void vTuyaPortFree( void *pv )
                     tuya_traceFREE( pv, pxLink->xBlockSize );
                     prvInsertBlockIntoFreeList( ( ( BlockLink_t * ) pxLink ) );
                 }
-                ( void ) tuya_ble_device_exit_critical();
+                tuya_ble_device_exit_critical();
             }
             else
             {

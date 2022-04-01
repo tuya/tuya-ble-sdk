@@ -328,7 +328,14 @@ tuya_ble_status_t tuya_ble_time_req(uint8_t time_type);
 
 tuya_ble_status_t tuya_ble_ota_response(tuya_ble_ota_response_t *p_data);
 
+/**
+ * @brief   Function for response the attachment data update req.
+ *
+ * @note    response the attachment data update req from call back event.
+ *.
+ * */
 
+tuya_ble_status_t tuya_ble_attachment_ota_response(tuya_ble_attachment_ota_response_t *p_data);
 
 /**
  * @brief   Function for send custom event to main process of ble sdk.
@@ -338,6 +345,24 @@ tuya_ble_status_t tuya_ble_ota_response(tuya_ble_ota_response_t *p_data);
  * */
 uint8_t tuya_ble_custom_event_send(tuya_ble_custom_evt_t evt);
 
+
+/**
+ * @brief   Function for update br/edr status in Dual-Mode Bluetooth  device.
+ *
+ * @param   
+ *          [in]p_data  : pointer to br/edr information data.
+ * @retval ::TUYA_BLE_SUCCESS                   Success.
+ * @retval ::TUYA_BLE_ERR_INVALID_PARAM Invalid Parameter.
+ * @retval ::TUYA_BLE_ERR_NO_MEM      No Memory for operation.
+ * @retval ::TUYA_BLE_ERR_NO_EVENT         
+ * @note    
+ *.
+ * */
+#if TUYA_BLE_BR_EDR_SUPPORTED
+
+tuya_ble_status_t tuya_ble_br_edr_data_info_update(tuya_ble_br_edr_data_info_t *p_data);
+
+#endif
 
 
 #if TUYA_BLE_USE_OS
@@ -400,6 +425,20 @@ uint16_t tuya_ble_scheduler_queue_events_get(void);
  * */
 bool tuya_ble_sleep_allowed_check(void);
 
+/**
+ * @brief   Function for get free heap size.
+ *
+ * @param   
+ *          
+ *          
+ * @note    
+ *.
+ * */
+#if (TUYA_BLE_USE_PLATFORM_MEMORY_HEAP==0)
+
+uint32_t tuya_ble_get_free_heap_size(void);
+
+#endif
 
 #endif
 

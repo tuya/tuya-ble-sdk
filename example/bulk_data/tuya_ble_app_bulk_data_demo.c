@@ -34,8 +34,8 @@ static tuya_ble_bulk_data_read_status_t current_read_status = TUYA_BLE_BULK_DATA
  * @details The bulk type is used to indicate the specific type of bulk data contained in the device. 
  * For example, a smart bracelet defines two types of data to be stored , one is daily sport data (steps, distance, and calories), 
  * and the other is sleep report data. The two types of data are stored separately in the device. In this application scenario, 
- * the device can distinguish the two types of bulk data by bulk type. For example, a bulk type of 0 indicates daily sport data, 
- * and 1 indicates sleep report data.
+ * the device can distinguish the two types of bulk data by bulk type. For example, a bulk type of 1 indicates daily sport data, 
+ * and 2 indicates sleep report data.
  *  
  */
 #define TEST_BULK_DATA_TYPE  1            

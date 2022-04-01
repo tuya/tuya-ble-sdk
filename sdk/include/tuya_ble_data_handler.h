@@ -126,6 +126,30 @@ extern "C" {
 #define FRM_GET_UNIX_TIME_WITH_DST_REQ     0x8014  //BLE->APP [timestamp + timezone + daylight saving time]
 #define FRM_GET_UNIX_TIME_WITH_DST_RESP    0x8014  //APP->BLE [timestamp + timezone + daylight saving time]
 
+#define FRM_IOT_DATA_REQUEST           	   	0x8019  //BLE->APP
+#define FRM_IOT_DATA_REQUEST_RESP 		   	0x8019  //APP->BLE
+
+#define FRM_IOT_DATA_RECEIVED         		0x801A  //APP->BLE
+#define FRM_IOT_DATA_RECEIVED_RESP     		0x801A  //BLE->APP
+
+#define TUYA_BLE_FRM_VOS_CMD               0x0030  //APP<->BLE
+#define TUYA_BLE_FRM_VOS_STREAMING         0x0031  //BLE->APP
+#define TUYA_BLE_FRM_VOS_RESPONSE          0x0032  //APP->BLE
+#define TUYA_BLE_FRM_VOS_TIMER_SETTING     0x0033  //APP->BLE
+#define TUYA_BLE_FRM_VOS_TIMER_SETTING_RESP   0x0033  //BLE->APP
+#define TUYA_BLE_FRM_VOS_TOKEN_READING        0x0034  //APP->BLE
+#define TUYA_BLE_FRM_VOS_TOKEN_READING_RESP   0x0034  //BLE->APP
+#define TUYA_BLE_FRM_VOS_TOKEN_SEND        0x0035  //BLE->APP
+#define TUYA_BLE_FRM_VOS_TOKEN_SEND_RESP   0x0035  //APP->BLE
+#define TUYA_BLE_FRM_VOS_TOKEN_WRITE       0x0036  //APP->BLE
+#define TUYA_BLE_FRM_VOS_TOKEN_WRITE_RESP  0x0036  //BLE->APP
+#define TUYA_BLE_FRM_VOS_COMMON_SET        0x0037  //APP->BLE
+#define TUYA_BLE_FRM_VOS_COMMON_SET_RESP   0x0037  //BLE->APP
+
+#define TUYA_BLE_FRM_BR_EDR_DATA_INFO_QUREY        0x0060  //APP->BLE
+#define TUYA_BLE_FRM_BR_EDR_DATA_INFO_RESP         0x0060  //BLE->APP 
+
+
 typedef enum
 {
     TUYA_BLE_OTA_STATUS_NONE,
@@ -158,6 +182,8 @@ void tuya_ble_air_recv_packet_free(void);
 
 void tuya_ble_set_device_version(uint32_t firmware_version,uint32_t hardware_version);
 
+void tuya_ble_set_device_attachment_version(tuya_ble_attachment_version_data_t *p_attachment_version);
+
 void tuya_ble_set_external_mcu_version(uint32_t firmware_version,uint32_t hardware_version);
 
 uint8_t tuya_ble_commData_send(uint16_t cmd,uint32_t ack_sn,uint8_t *data,uint16_t len,uint8_t encryption_mode);
@@ -182,6 +208,10 @@ void tuya_ble_device_unbond(void);
 
 void tuya_ble_auth_data_reset(void);
 
+#endif
+
+#if TUYA_BLE_BR_EDR_SUPPORTED
+void tuya_ble_br_edr_data_info_update_internal(tuya_ble_br_edr_data_info_t *p_data);
 #endif
 
 #ifdef __cplusplus

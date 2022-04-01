@@ -303,6 +303,77 @@ void tuya_ble_handle_bulk_data_evt(tuya_ble_evt_param_t *evt)
 
 }
 
+static void tuya_ble_handle_bulk_data_read_request_evt(int32_t evt_id, void *data)
+{
+	uint8_t p_buf[80];
+	uint16_t index = 0 ,i = 0;
+    tuya_ble_bulk_data_req_t* p_res_data = (tuya_ble_bulk_data_req_t*)data;
+	
+	(void)evt_id;
+	
+    TUYA_BLE_LOG_INFO("tuya_ble_handle_bulk_data_read_request_evt.");
+   
+    if(p_res_data->bulk_data_number>10)
+		p_res_data->bulk_data_number = 10;
+	index = 0;
+	p_buf[index++] = 0; 
+    p_buf[index++] = (p_res_data->bulk_data_number>>8)&0xFF; 
+    p_buf[index++] = p_res_data->bulk_data_number&0xFF; 	
+	for(i=0;i<p_res_data->bulk_data_number;i++)
+	{
+		p_buf[index++] = p_res_data->bulk_data[i].bulk_type;
+		p_buf[index++] = p_res_data->bulk_data[i].flag;
+		p_buf[index++] = p_res_data->bulk_data[i].res;
+		p_buf[index++] = (p_res_data->bulk_data[i].length>>24)&0xFF;
+		p_buf[index++] = (p_res_data->bulk_data[i].length>>16)&0xFF;
+		p_buf[index++] = (p_res_data->bulk_data[i].length>>8)&0xFF;
+		p_buf[index++] = p_res_data->bulk_data[i].length&0xFF;
+	}
+	
+	tuya_ble_commData_send(0x000B,0,p_buf,index,ENCRYPTION_MODE_SESSION_KEY);
+
+    if(p_res_data) 
+    {
+        tuya_ble_free((uint8_t*)p_res_data);
+    }
+}
+
+
+tuya_ble_status_t tuya_ble_bulk_data_read_request(tuya_ble_bulk_data_req_t *p_data)
+{
+    tuya_ble_custom_evt_t custom_evt;
+    tuya_ble_bulk_data_req_t* p_res_data = NULL;
+    uint8_t * p_buffer = NULL;
+    
+    if ((p_data->bulk_data_number==0)||(p_data->bulk_data_number>10))
+    {
+        return TUYA_BLE_ERR_INVALID_PARAM;
+    }
+          
+    p_buffer = tuya_ble_malloc(sizeof(tuya_ble_bulk_data_req_t));
+        
+    if(p_buffer)
+    {
+        p_res_data = (tuya_ble_bulk_data_req_t*)p_buffer;
+        memcpy(p_res_data,p_data,sizeof(tuya_ble_bulk_data_req_t));
+    }
+    else
+    {
+       return TUYA_BLE_ERR_NO_MEM;
+    }
+    
+    custom_evt.evt_id = 0;//reserve
+    custom_evt.data = p_res_data;
+    custom_evt.custom_event_handler = tuya_ble_handle_bulk_data_read_request_evt;
+    
+    if (tuya_ble_custom_event_send(custom_evt) != 0)
+    {
+        tuya_ble_free(p_buffer);
+        return TUYA_BLE_ERR_NO_EVENT;
+    }
+
+    return TUYA_BLE_SUCCESS;	
+}
 
 
 

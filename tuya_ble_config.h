@@ -132,6 +132,7 @@
   * TUYA_BLE_SECURE_CONNECTION_WITH_ECC          encrypt with ECDH
   * TUYA_BLE_SECURE_CONNECTION_WTIH_PASSTHROUGH  no encrypt 
   * TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_ADVANCED_ENCRYPTION  advanced encrypt(security chip ) with auth key  
+  * TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_FOR_QR_CODE  encrypt with auth key for QR code
   * @note : only choose one 
  */
 #ifndef  TUYA_BLE_SECURE_CONNECTION_TYPE
@@ -241,11 +242,65 @@
 #define TUYA_BLE_FEATURE_WEATHER_ENABLE  0
 #endif
 
+
+/*
+ * Enable the iot channel module.
+ */
+#ifndef TUYA_BLE_FEATURE_IOT_CHANNEL_ENABLE
+#define TUYA_BLE_FEATURE_IOT_CHANNEL_ENABLE  0
+#endif
+
+/*
+ * Enable the feature scene module.
+ */
+#ifndef TUYA_BLE_FEATURE_SCENE_ENABLE
+#define TUYA_BLE_FEATURE_SCENE_ENABLE  0
+#endif
+
+/*
+ * Enable the ble+x module. 
+ */
+#ifndef TUYA_BLE_FEATURE_EXT_MODULE_ENABLE
+#define TUYA_BLE_FEATURE_EXT_MODULE_ENABLE  0
+#endif
+
+/*
+ * Enable the vos module.
+ */
+#ifndef TUYA_BLE_VOS_ENABLE
+#define TUYA_BLE_VOS_ENABLE  0
+#endif
+
+/*
+ * Enable the file module.
+ */
+#ifndef TUYA_BLE_FILE_ENABLE
+#define TUYA_BLE_FILE_ENABLE  0
+#endif
+
+/*
+ * Enable the bulk data module.
+ */
+#ifndef TUYA_BLE_BULK_DATA_ENABLE
+#define TUYA_BLE_BULK_DATA_ENABLE  0
+#endif
+
 /*
  * Enable support the link layer encryption.
  */
 #ifndef TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE
 #define TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE  0
+#endif
+
+/*
+ * Forced the link layer encryption.
+ */
+#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE
+
+#ifndef TUYA_BLE_LINK_LAYER_FORCED_ENCRYPTION
+#define TUYA_BLE_LINK_LAYER_FORCED_ENCRYPTION  0
+#endif
+
 #endif
 
 /*
@@ -256,6 +311,20 @@
  */
 #ifndef TUYA_BLE_AUTO_REQUEST_TIME_CONFIGURE
 #define TUYA_BLE_AUTO_REQUEST_TIME_CONFIGURE  1
+#endif
+
+/*
+ * BR/EDR supported.
+ */
+#ifndef TUYA_BLE_BR_EDR_SUPPORTED 
+#define TUYA_BLE_BR_EDR_SUPPORTED  0
+#endif
+
+/*
+ * Whether to use three-part version number.
+ */
+#ifndef TUYA_BLE_THREE_PART_VERSION_NUMBER_ENABLE 
+#define TUYA_BLE_THREE_PART_VERSION_NUMBER_ENABLE  1
 #endif
 
 
@@ -273,9 +342,24 @@
 #define TUYA_NV_START_ADDR              0 
 #endif
 
-/* area size. */
+/** area size. */
 #ifndef TUYA_NV_AREA_SIZE
 #define TUYA_NV_AREA_SIZE              (4*TUYA_NV_ERASE_MIN_SIZE)
+#endif
+
+/** vos token nv. */
+#if TUYA_BLE_VOS_ENABLE
+
+/* start address */
+#ifndef TUYA_NV_VOS_TOKEN_START_ADDR
+#define TUYA_NV_VOS_TOKEN_START_ADDR      0 
+#endif
+
+/** area size. */
+#ifndef TUYA_NV_VOS_TOKEN_AREA_SIZE
+#define TUYA_NV_VOS_TOKEN_AREA_SIZE      (1*TUYA_NV_ERASE_MIN_SIZE)
+#endif
+
 #endif
 
 /*MACRO for production test module*/

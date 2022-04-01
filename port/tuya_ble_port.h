@@ -101,6 +101,14 @@ tuya_ble_status_t tuya_ble_gatt_send_data(const uint8_t *p_data,uint16_t len);
 tuya_ble_status_t tuya_ble_device_info_characteristic_value_update(uint8_t const *p_data, uint8_t data_len);
 
 /**
+ *@brief     Function for security request.  
+ *        
+ *@note      
+ *           
+ * */
+tuya_ble_status_t tuya_ble_link_security_request(void);
+
+/**
  * @brief   Create a timer.
  * @param   [out] p_timer_id: a pointer to timer id address which can uniquely identify the timer.
             [in] timeout_value_ms Number of milliseconds to time-out event

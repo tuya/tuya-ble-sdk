@@ -39,7 +39,15 @@
 #include "tuya_ble_app_production_test.h"
 #include "tuya_ble_log.h"
 #include "tuya_ble_event_handler.h"
-
+#if ( TUYA_BLE_FEATURE_IOT_CHANNEL_ENABLE != 0 )
+#include "tuya_ble_feature_iot_channel.h"
+#endif
+#if TUYA_BLE_VOS_ENABLE
+#include "tuya_ble_vos.h"
+#endif
+#if ( TUYA_BLE_FEATURE_EXT_MODULE_ENABLE != 0 )
+#include "tuya_ble_feature_ext_module.h"
+#endif
 
 void tuya_ble_handle_device_info_update_evt(tuya_ble_evt_param_t *evt)
 {
@@ -490,6 +498,10 @@ void tuya_ble_handle_factory_reset_evt(tuya_ble_evt_param_t *evt)
 
     }
 
+#if TUYA_BLE_VOS_ENABLE
+    tuya_vos_token_reset();
+#endif
+
 }
 
 
@@ -522,6 +534,21 @@ void tuya_ble_handle_ota_response_evt(tuya_ble_evt_param_t *evt)
         ota_cmd_type = FRM_OTA_DATA_REQ;
         break;
     case TUYA_BLE_OTA_END :
+        ota_cmd_type = FRM_OTA_END_REQ;
+        break;
+    case TUYA_BLE_ATTACHMENT_OTA_REQ:
+        ota_cmd_type = FRM_OTA_START_REQ;
+        break;
+    case TUYA_BLE_ATTACHMENT_OTA_FILE_INFO:
+        ota_cmd_type = FRM_OTA_FILE_INFOR_REQ;
+        break;
+    case TUYA_BLE_ATTACHMENT_OTA_FILE_OFFSET_REQ :
+        ota_cmd_type = FRM_OTA_FILE_OFFSET_REQ;
+        break;
+    case TUYA_BLE_ATTACHMENT_OTA_DATA :
+        ota_cmd_type = FRM_OTA_DATA_REQ;
+        break;
+    case TUYA_BLE_ATTACHMENT_OTA_END :
         ota_cmd_type = FRM_OTA_END_REQ;
         break;
     default:
@@ -587,11 +614,11 @@ void tuya_ble_handle_data_prod_test_response_evt(tuya_ble_evt_param_t *evt)
         }
         else
         {
-            #if (TUYA_BLE_PROD_TEST_SUPPORT_ENCRYPTION != 0)
-			encry_mode = ENCRYPTION_MODE_FTM_KEY;
-			#else 
-			encry_mode = ENCRYPTION_MODE_NONE;
-			#endif 
+#if (TUYA_BLE_PROD_TEST_SUPPORT_ENCRYPTION != 0)
+            encry_mode = ENCRYPTION_MODE_FTM_KEY;
+#else
+            encry_mode = ENCRYPTION_MODE_NONE;
+#endif
         }
 
         tuya_ble_commData_send(FRM_FACTORY_TEST_RESP,0,evt->prod_test_res_data.p_data,evt->prod_test_res_data.data_len,encry_mode);
@@ -608,8 +635,6 @@ void tuya_ble_handle_data_prod_test_response_evt(tuya_ble_evt_param_t *evt)
 void tuya_ble_handle_uart_cmd_evt(tuya_ble_evt_param_t *evt)
 {
     uint8_t sum;
-    uint8_t *uart_send_buffer;
-    uint16_t uart_send_len;
 
     TUYA_BLE_LOG_HEXDUMP_DEBUG("received uart cmd data",(uint8_t*)evt->uart_cmd_data.p_data,evt->uart_cmd_data.data_len);//
 
@@ -704,14 +729,14 @@ void tuya_ble_handle_time_request_evt(tuya_ble_evt_param_t *evt)
     {
         cmd = FRM_GET_UNIX_TIME_CHAR_DATE_REQ;
     }
-	else if(evt->time_req_data.time_type==2)
+    else if(evt->time_req_data.time_type==2)
     {
         cmd = FRM_GET_APP_LOCAL_TIME_REQ;
     }
-	else
-	{
-		return;
-	}
+    else
+    {
+        return;
+    }
 
     tuya_ble_commData_send(cmd,0,NULL,0,encry_mode);
 
@@ -720,8 +745,8 @@ void tuya_ble_handle_time_request_evt(tuya_ble_evt_param_t *evt)
 void tuya_ble_handle_extend_time_request_evt(tuya_ble_evt_param_t *evt)
 {
     uint8_t encry_mode = 0;
-	uint8_t data[1];
-	
+    uint8_t data[1];
+
     if(tuya_ble_pair_rand_valid_get()==1)
     {
         encry_mode = ENCRYPTION_MODE_SESSION_KEY;
@@ -809,6 +834,7 @@ void tuya_ble_handle_connecting_request_evt(tuya_ble_evt_param_t *evt)
 }
 #endif
 
+extern void tuya_ble_vos_disconnect_handler(void);
 extern void tuya_ble_connect_monitor_timer_start(void);
 void tuya_ble_handle_connect_change_evt(tuya_ble_evt_param_t *evt)
 {
@@ -835,19 +861,19 @@ void tuya_ble_handle_connect_change_evt(tuya_ble_evt_param_t *evt)
         tuya_ble_internal_production_test_with_ble_flag_clear();
 
 #endif
-        
+
 #if (TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_ADVANCED_ENCRYPTION)
 
         tuya_ble_auth_data_reset();
 
-#endif          
+#endif
 
-#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE	
-	
-        tuya_ble_link_status_set(LINK_CONNECTED);	
-		
-#endif	
-		
+#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE
+
+        tuya_ble_link_status_set(LINK_CONNECTED);
+
+#endif
+
     }
     else if(evt->connect_change_evt==TUYA_BLE_DISCONNECTED)
     {
@@ -859,6 +885,18 @@ void tuya_ble_handle_connect_change_evt(tuya_ble_evt_param_t *evt)
 
         tuya_ble_air_recv_packet_free();
 
+#if TUYA_BLE_VOS_ENABLE
+        tuya_ble_vos_disconnect_handler();
+#endif
+
+#if ( TUYA_BLE_FEATURE_IOT_CHANNEL_ENABLE != 0 )
+        tuya_ble_iot_data_recv_packet_free();
+#endif
+
+#if ( TUYA_BLE_FEATURE_EXT_MODULE_ENABLE != 0 )
+        tuya_ble_em_active_data_recv_packet_free();
+#endif
+
         if(tuya_ble_current_para.sys_settings.bound_flag==1)
         {
             tuya_ble_connect_status_set(BONDING_UNCONN);
@@ -867,13 +905,13 @@ void tuya_ble_handle_connect_change_evt(tuya_ble_evt_param_t *evt)
         {
             tuya_ble_connect_status_set(UNBONDING_UNCONN);
         }
-		
-#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE	
-	
-        tuya_ble_link_status_set(LINK_DISCONNECTED);	
-		
-#endif		
-		
+
+#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE
+
+        tuya_ble_link_status_set(LINK_DISCONNECTED);
+
+#endif
+
     }
     else
     {
@@ -900,19 +938,55 @@ void tuya_ble_handle_connect_change_evt(tuya_ble_evt_param_t *evt)
 
 void tuya_ble_handle_link_update_evt(tuya_ble_evt_param_t *evt)
 {
-#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE	
-	
-     if(evt->link_update_data.link_app_status==1)
-	 {
-		 tuya_ble_link_status_set(LINK_ENCRYPTED);
-		 if(tuya_ble_connect_status_get()!=BONDING_CONN)
-		 {
-			 tuya_ble_connect_monitor_timer_stop();
-		 }
-		 TUYA_BLE_LOG_DEBUG("link encrypted.");
-	 }
-	 
-#endif     
+#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE
+    uint8_t encry_mode = 0;
+    uint8_t data[2];
+    if(evt->link_update_data.link_app_status==1)
+    {
+        if(LINK_ENCRYPTED_REQUEST == tuya_ble_link_status_get())
+        {
+#if  TUYA_BLE_LINK_LAYER_FORCED_ENCRYPTION
+
+            if(tuya_ble_current_para.sys_settings.bound_flag)
+            {
+                if(tuya_ble_pair_rand_valid_get()==1)
+                {
+                    encry_mode = ENCRYPTION_MODE_SESSION_KEY;
+                }
+                else
+                {
+                    encry_mode = ENCRYPTION_MODE_KEY_4;
+                }
+            }
+            else
+            {
+                if(tuya_ble_pair_rand_valid_get()==1)
+                {
+                    encry_mode = ENCRYPTION_MODE_KEY_2;
+                }
+                else
+                {
+                    encry_mode = ENCRYPTION_MODE_KEY_1;
+                }
+            }
+            memset(data,0,sizeof(data));
+            data[0] = 0x00;
+            data[1] |= 0x01;
+
+            tuya_ble_commData_send(0x801D,0,data,2,encry_mode);
+#endif
+        }
+        else
+        {
+            tuya_ble_connect_monitor_timer_stop();
+        }
+
+        tuya_ble_link_status_set(LINK_ENCRYPTED);
+
+        TUYA_BLE_LOG_DEBUG("link encrypted.");
+    }
+
+#endif
 }
 
 void tuya_ble_handle_ble_data_evt(uint8_t *buf,uint16_t len)

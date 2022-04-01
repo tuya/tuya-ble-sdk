@@ -74,22 +74,6 @@ typedef struct
 } tuya_ble_storage_sys_settings_t;
 
 
-static bool buffer_value_is_all_x(uint8_t *buffer,uint16_t len,uint8_t value)
-{
-    bool ret = true;
-    for(uint16_t i = 0; i<len; i++)
-    {
-        if(buffer[i]!= value)
-        {
-            ret = false;
-            break;
-        }
-    }
-    return ret;
-}
-
-
-
 static uint32_t auth_settings_crc_get(tuya_ble_auth_settings_t const * p_settings)
 {
     // The crc is calculated from the s_dfu_settings struct, except the crc itself and the init command

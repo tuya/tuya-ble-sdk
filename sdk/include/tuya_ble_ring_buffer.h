@@ -1,5 +1,5 @@
 /**
- * \file tuya_ble_queue.h
+ * \file tuya_ble_ring_buffer.h
  *
  * \brief
  */
@@ -22,8 +22,8 @@
  *  This file is part of tuya ble sdk
  */
 
-#ifndef TUYA_BLE_QUEUE_H_
-#define TUYA_BLE_QUEUE_H_
+#ifndef TUYA_BLE_RING_BUFFER_H_
+#define TUYA_BLE_RING_BUFFER_H_
 
 #include "tuya_ble_stdlib.h"
 #include "tuya_ble_type.h"
@@ -32,25 +32,32 @@
 extern "C" {
 #endif
 
-typedef struct {
-    void * buf;
-    volatile uint32_t size;
-    volatile uint32_t offset;
-    volatile uint16_t rd_ptr;
-    volatile uint16_t wr_ptr;
-    volatile uint32_t used;
-} tuya_ble_queue_t;
 
-tuya_ble_status_t tuya_ble_queue_init(tuya_ble_queue_t *q, void *buf, uint16_t size, uint16_t elem_size);
-tuya_ble_status_t tuya_ble_enqueue(tuya_ble_queue_t *q, void *in);
-tuya_ble_status_t tuya_ble_queue_get(tuya_ble_queue_t *q, void *out);
-tuya_ble_status_t tuya_ble_dequeue(tuya_ble_queue_t *q, void *out);
-void tuya_ble_queue_decrease(tuya_ble_queue_t *q);
-void tuya_ble_queue_flush(tuya_ble_queue_t *q);
-uint8_t tuya_ble_get_queue_used(tuya_ble_queue_t *q);
+typedef struct
+{
+    volatile uint8_t *p_buf;
+    volatile uint32_t capacity;
+    volatile uint32_t rd_ptr;
+    volatile uint32_t wr_ptr;
+    volatile uint32_t used;
+    volatile uint32_t over_write;
+}tuya_ble_ring_buffer_t;
+
+
+tuya_ble_status_t tuya_ble_ring_buffer_init(tuya_ble_ring_buffer_t* p_ring_buffer,void *p_data_buffer, uint32_t size);
+
+uint32_t tuya_ble_ring_buffer_push(tuya_ble_ring_buffer_t* p_ring_buffer, void *p_src, uint32_t bytes, bool full_check);
+
+uint32_t tuya_ble_ring_buffer_pop(tuya_ble_ring_buffer_t* p_ring_buffer, void *p_dest,uint32_t bytes);
+
+uint32_t tuya_ble_get_ring_buffer_used(tuya_ble_ring_buffer_t* p_ring_buffer);
+
+void tuya_ble_ring_buffer_flush(tuya_ble_ring_buffer_t* p_ring_buffer);
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //TUYA_BLE_QUEUE_H_
+#endif //TUYA_BLE_RING_BUFFER_H_
+

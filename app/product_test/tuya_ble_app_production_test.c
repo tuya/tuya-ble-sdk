@@ -73,7 +73,7 @@ void tuya_ble_internal_production_test_with_ble_flag_clear(void)
 
 uint8_t tuya_ble_internal_production_test_with_ble_flag_get(void)
 {
-    return tuya_ble_production_test_with_ble_flag;
+    return (tuya_ble_production_test_with_ble_flag|tuya_ble_production_test_flag);
 }
 
 
@@ -160,7 +160,7 @@ __TUYA_BLE_WEAK tuya_ble_status_t tuya_ble_prod_beacon_scan_stop(void)
 
 __TUYA_BLE_WEAK tuya_ble_status_t tuya_ble_prod_beacon_get_rssi_avg(int8_t *rssi)
 {
-    *rssi = -20;
+    *rssi = -128;
     return TUYA_BLE_SUCCESS;
 }
 

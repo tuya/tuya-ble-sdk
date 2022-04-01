@@ -31,12 +31,12 @@
 #include "tuya_ble_port.h"
 
 
-#define MAX_NUMBER_OF_TUYA_MESSAGE        16      //!<  tuya ble message queue size
+#define MAX_NUMBER_OF_TUYA_MESSAGE        32      //!<  tuya ble message queue size
 
 
-//BLE Communication protocol version v4.2
+//BLE Communication protocol version v4.4
 #define TUYA_BLE_PROTOCOL_VERSION_HIGN   0x04
-#define TUYA_BLE_PROTOCOL_VERSION_LOW    0x02
+#define TUYA_BLE_PROTOCOL_VERSION_LOW    0x04
 
 #define TUYA_BLE_DP_WRITE_CURRENT_VERSION   0
 
@@ -48,7 +48,7 @@
 
 #define TUYA_UART_RECEIVE_MAX_DP_BUFFER_DATA_LEN  (512+4)
 
-#define TUYA_BLE_RECEIVE_MAX_DP_DATA_LEN          (512+4)
+#define TUYA_BLE_RECEIVE_MAX_DP_DATA_LEN          (512+4+5)
 
 #define TUYA_BLE_SEND_MAX_DP_DATA_LEN              TUYA_BLE_RECEIVE_MAX_DP_DATA_LEN
 
@@ -87,7 +87,7 @@
 /**
  * MACRO for memory management
  */
-#define TUYA_BLE_TOTAL_HEAP_SIZE          5120
+#define TUYA_BLE_TOTAL_HEAP_SIZE          (5120)
 
 #if (TUYA_BLE_TOTAL_HEAP_SIZE<5120)
 #define TUYA_BLE_BULK_DATA_MAX_READ_BLOCK_SIZE 512
@@ -144,6 +144,29 @@
 
 #if (TUYA_BLE_SYS_FLASH_BACKUP_ADDR>=(TUYA_NV_AREA_SIZE+TUYA_NV_START_ADDR))
 #error "Storage Memory overflow!"
+#endif
+
+
+
+#if TUYA_BLE_VOS_ENABLE
+
+#if (((TUYA_NV_VOS_TOKEN_START_ADDR+TUYA_NV_VOS_TOKEN_AREA_SIZE)>TUYA_NV_START_ADDR) && (TUYA_NV_VOS_TOKEN_START_ADDR<(TUYA_NV_AREA_SIZE+TUYA_NV_START_ADDR)))
+#error "Vos token storage memory overflow!"
+#endif
+
+#if (TUYA_NV_VOS_TOKEN_AREA_SIZE<(2048))
+#error "Vos token storage memory is not enough!"
+#endif
+
+#endif
+
+
+#if ((TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_V2)||(TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_ADVANCED_ENCRYPTION_V2)\
+||(TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_FOR_QR_CODE_V2))
+#define TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN  TUYA_BLE_ADV_LOCAL_NAME_MAX_SPACE_LEN
+#else
+#define TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN  5
+
 #endif
 
 

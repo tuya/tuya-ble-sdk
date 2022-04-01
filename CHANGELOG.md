@@ -3,6 +3,56 @@
 
 
 
+## [2.1.3] - 2022-03-11
+
+### Changed
+
+- Optimized  vos components.
+
+  
+
+## [2.1.2] - 2022-01-11
+
+### Added
+
+- The length of the name in advertising data can be extended to a maximum of 14 characters in V2 encryption mode.
+
+### Changed
+
+- Optimized encryption status reporting under the LINK layer pairing mechanism.
+
+
+
+## [2.1.1] - 2021-12-16
+
+### Added
+
+- Added api for  bulk data request to read.
+
+### Fixed
+
+- Fixed the bug of unsuccessful compilation when VOS was disabled.
+
+
+
+## [2.1.0] - 2021-12-03
+
+### Added
+
+- Added file sending (mobile app to device) channel.
+- Added attachment file upgrade channel.
+- Added support for scanning QR code to register and bind devices.
+- Added support for working in the mandatory bluetooth LINK layer pairing and bonding environment.
+- Added support for Alexa voice service.
+- Added IOT channel, currently only supports the request and control of scene data.
+- Added communication interfaces for other protocol expansion modules (currently only supports Tuya NBIoT modules).
+
+### Fixed
+
+- Fixed the bug that may cause memory leaks in certain scenarios in the weather component.
+
+
+
 ## [2.0.0] - 2021-04-24
 
 ### Added

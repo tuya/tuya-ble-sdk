@@ -38,7 +38,7 @@
 #elif defined(__ICCARM__)
 #pragma language = extended
 #elif defined(__GNUC__)
-/** anonymous unions are enabled by default */
+/* anonymous unions are enabled by default */
 #endif
 
 
@@ -143,7 +143,7 @@ static inline unsigned int tuya_ble_gcc_current_sp(void)
 
 #define TUYA_BLE_PRODUCT_ID_MAX_LEN  16
 
-#define TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN  5
+#define TUYA_BLE_ADV_LOCAL_NAME_MAX_SPACE_LEN  14
 
 /** @defgroup TUY_BLE_DEVICE_COMMUNICATION_ABILITY tuya ble device communication ability
  * @{
@@ -178,12 +178,26 @@ static inline unsigned int tuya_ble_gcc_current_sp(void)
 
 #define TUYA_BLE_SECURE_CONNECTION_WTIH_PASSTHROUGH  0x02
 
-#define TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_DEVCIE_ID_20     0x03 //Discarded in agreements 4.0 and later
+#define TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_DEVCIE_ID_20              0x03 //Discarded in agreements 4.0 and later
 
-#define TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_ADVANCED_ENCRYPTION    0x04
+#define TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_ADVANCED_ENCRYPTION       0x04
+
+#define TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_FOR_QR_CODE               0x05
+
+#define TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_V2                        0x06
+
+#define TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_ADVANCED_ENCRYPTION_V2    0x07
+
+#define TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_FOR_QR_CODE_V2            0x08
 /** End of TUYA_BLE_SECURE_CONNECTION_TYPE
   * @}
   */
+
+/** @defgroup TUY_BLE_DEVICE_COMMUNICATION_ABILITY tuya ble device communication ability
+ * @{
+ */
+
+
 
 typedef enum {
     TUYA_BLE_SUCCESS  = 0x00,
@@ -200,6 +214,7 @@ typedef enum {
     TUYA_BLE_ERR_BUSY,
     TUYA_BLE_ERR_COMMON,
     TUYA_BLE_ERR_RESOURCES,
+	TUYA_BLE_ERR_INVALID_TOKEN, 
     TUYA_BLE_ERR_UNKNOWN,          // other ble sdk errors
 } tuya_ble_status_t;
 
@@ -220,6 +235,49 @@ typedef struct {
     uint8_t addr[6];
 } tuya_ble_gap_addr_t;
 
+
+typedef struct {
+	uint8_t channel;  /**< 10 - 19. */
+	uint32_t version;
+}tuya_ble_attachment_channel_data_t;
+
+
+typedef struct {
+	uint8_t channel_number;    /**< 10 max */
+	tuya_ble_attachment_channel_data_t channel_data[10];
+}tuya_ble_attachment_version_data_t;
+
+/** @defgroup TUY_BLE_DEVICE_BR_EDR_ABILITY tuya ble device br-edr ability
+ * @{
+ */
+#define TUYA_BLE_DEVICE_BR_EDR_ABILITY_DEFAULT            0x00
+#define TUYA_BLE_DEVICE_BR_EDR_ABILITY_CTKD               0x01
+
+/** End of TUY_BLE_DEVICE_BR_EDR_ABILITY
+  * @}
+  */
+/*
+ * current br-edr connect status
+ *@note
+ * */
+typedef enum {
+    BR_EDR_UNCONNECT = 0,
+    BR_EDR_CONNECTING,
+	BR_EDR_CONNECTED,
+    BR_EDR_UNKNOW_STATUS
+} tuya_ble_br_edr_connect_status_t;
+
+typedef struct 
+{
+    uint8_t mac[6];   
+    uint8_t dev_ability;  /**< default value is TUYA_BLE_DEVICE_BR_EDR_ABILITY_DEFAULT,if support ctkd ,the value is TUYA_BLE_DEVICE_BR_EDR_ABILITY_DEFAULT|TUYA_BLE_DEVICE_BR_EDR_ABILITY_CTKD */
+    uint8_t is_paired; /**< 0 - unpaired, 1 - paired. */
+    tuya_ble_br_edr_connect_status_t connect_status; 
+    uint8_t name_len; 
+    uint8_t name[32]; 
+}tuya_ble_br_edr_data_info_t;
+
+
 typedef struct {
 	uint8_t use_ext_license_key; //If use the license key stored by the SDK,initialized to 0, Otherwise 1.
     uint8_t device_id_len;       //if ==20,Compressed into 16
@@ -232,9 +290,10 @@ typedef struct {
     uint8_t product_id_len;
     uint8_t product_id[TUYA_BLE_PRODUCT_ID_MAX_LEN];
 	uint8_t adv_local_name_len;
-    uint8_t adv_local_name[TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN];	//Only supported when TUYA_BLE_PROTOCOL_VERSION_HIGN >= 4.
+    uint8_t adv_local_name[TUYA_BLE_ADV_LOCAL_NAME_MAX_SPACE_LEN];	//Only supported when TUYA_BLE_PROTOCOL_VERSION_HIGN >= 4.
 	uint32_t firmware_version; //0x00010102 : v1.1.2
     uint32_t hardware_version;
+	tuya_ble_attachment_version_data_t attacnment_version;
 	
     uint8_t device_vid[DEVICE_VIRTUAL_ID_LEN];    
     uint8_t login_key[LOGIN_KEY_LEN];
@@ -285,10 +344,11 @@ typedef enum {
     TUYA_BLE_EVT_CONNECTING_REQUEST,
 	TUYA_BLE_EVT_WEATHER_DATA_REQ,
 	TUYA_BLE_EVT_LINK_STATUS_UPDATE,
+	TUYA_BLE_EVT_SCENE_DATA_REQ,
 } tuya_ble_evt_t;
 
 
-/**
+/*
  * dp data report mode
  *@note
  * */
@@ -419,7 +479,7 @@ typedef struct {
     uint8_t reserve;
 } tuya_ble_factory_reset_t;
 
-/**
+/*
  * ota data
  * */
 
@@ -431,6 +491,12 @@ typedef enum
     TUYA_BLE_OTA_DATA,
     TUYA_BLE_OTA_END,
     TUYA_BLE_OTA_UNKONWN,
+	TUYA_BLE_ATTACHMENT_OTA_REQ,
+	TUYA_BLE_ATTACHMENT_OTA_FILE_INFO,
+	TUYA_BLE_ATTACHMENT_OTA_FILE_OFFSET_REQ,
+	TUYA_BLE_ATTACHMENT_OTA_DATA,
+	TUYA_BLE_ATTACHMENT_OTA_END,
+	TUYA_BLE_ATTACHMENT_OTA_UNKONWN,
 } tuya_ble_ota_data_type_t;
 
 
@@ -439,6 +505,28 @@ typedef struct {
     uint16_t data_len;
     uint8_t *p_data;
 } tuya_ble_ota_response_t;
+
+
+typedef tuya_ble_ota_response_t tuya_ble_attachment_ota_response_t;
+
+
+/*
+ * file data
+ * */
+typedef enum
+{
+    TUYA_BLE_FILE_INFO,
+    TUYA_BLE_FILE_OFFSET_REQ,
+    TUYA_BLE_FILE_DATA,
+    TUYA_BLE_FILE_END,
+    TUYA_BLE_FILE_UNKONWN,
+} tuya_ble_file_data_type_t;
+
+typedef struct {
+    tuya_ble_file_data_type_t type;
+    uint16_t data_len;
+    uint8_t *p_data;
+} tuya_ble_file_response_t;
 
 
 typedef enum
@@ -515,6 +603,27 @@ typedef struct {
     } params;
 } tuya_ble_bulk_data_response_t;
 
+/**@brief   bulk_type.
+ *
+ * @details The bulk type is used to indicate the specific type of bulk data contained in the device. 
+ * For example, a smart bracelet defines two types of data to be stored , one is daily sport data (steps, distance, and calories), 
+ * and the other is sleep report data. The two types of data are stored separately in the device. In this application scenario, 
+ * the device can distinguish the two types of bulk data by bulk type. For example, a bulk type of 1 indicates daily sport data, 
+ * and 2 indicates sleep report data.
+ *  
+ */
+typedef struct {
+	uint8_t bulk_type;  
+	uint8_t flag;       /**< Currently only supports 0 and must be 0.*/
+	uint32_t length;
+	uint8_t res;
+}tuya_ble_bulk_data_info_t;
+
+
+typedef struct {
+	uint16_t bulk_data_number;    /**< current 10 max */
+	tuya_ble_bulk_data_info_t bulk_data[10];
+}tuya_ble_bulk_data_req_t;
 
 
 typedef struct {
@@ -603,13 +712,23 @@ typedef struct {
 } tuya_ble_link_status_update_data_t;
 
 
+typedef struct{
+	uint8_t *p_data;
+	uint16_t data_len;
+} tuya_ble_scene_req_data_t;
+
+typedef struct{
+	uint8_t *p_data;
+	uint16_t data_len;
+}tuya_ble_query_em_info_response_t;
+
 typedef struct {
     tuya_ble_evt_t  event;
     void (*event_handler)(void*evt);
 } tuya_ble_evt_hdr_t;
 
 
-/**
+/*
  * tuya ble sdk evt parameters union
  * */
 typedef struct {
@@ -644,13 +763,14 @@ typedef struct {
         tuya_ble_connecting_request_data_t connecting_request_data;
 		tuya_ble_weather_req_data_t weather_req_data; 
 		tuya_ble_link_status_update_data_t link_update_data;
+		tuya_ble_scene_req_data_t scene_req_data;
     };
 } tuya_ble_evt_param_t;
 
 
 
 
-/**
+/*
  * tuya ble call back event type.
  * */
 typedef enum {
@@ -680,9 +800,27 @@ typedef enum {
     TUYA_BLE_CB_EVT_UNBIND_RESET_RESPONSE,               // Notify the application of the result of the local reset
 	TUYA_BLE_CB_EVT_WEATHER_DATA_REQ_RESPONSE,	         // received request weather data app response 
 	TUYA_BLE_CB_EVT_WEATHER_DATA_RECEIVED, 		         // received app sync weather data
+	
+	TUYA_BLE_CB_EVT_SCENE_REQ_RESPONSE,					// received request scene data or control app response 			
+	TUYA_BLE_CB_EVT_SCENE_DATA_RECEIVED, 		    	// received app sync iot scene list data
+	TUYA_BLE_CB_EVT_SCENE_CTRL_RESULT_RECEIVED, 		// received app sync iot scene control result 
+	
+	TUYA_BLE_CB_EVT_AVS_SPEECH_STATE,
+	TUYA_BLE_CB_EVT_AVS_SPEECH_WEATHER_DATA,
+	TUYA_BLE_CB_EVT_AVS_SPEECH_LIST_DATA,
+	TUYA_BLE_CB_EVT_AVS_SPEECH_CMD_RES,
+	TUYA_BLE_CB_EVT_AVS_SPEECH_TIMER_SET_DATA,
+	TUYA_BLE_CB_EVT_AVS_SPEECH_TIMER_CANCEL_DATA,
+	TUYA_BLE_CB_EVT_AVS_NOTIFICATIONS_INDICATOR,
+	TUYA_BLE_CB_EVT_ATTACHMENT_OTA_DATA,
+	
+	TUYA_BLE_CB_EVT_FILE_DATA, // received app file data
+	TUYA_BLE_CB_EVT_QUERY_EXT_MODULE_DEV_INFO,			// received app query ext module request
+	TUYA_BLE_CB_EVT_EXT_MODULE_ACTIVE_INFO_RECEIVED,	// received app sync ext module active data
+
 } tuya_ble_cb_evt_t;
 
-/**
+/*
  * current connect status
  *@note
  * */
@@ -696,18 +834,19 @@ typedef enum {
     UNKNOW_STATUS
 } tuya_ble_connect_status_t;
 
-/**
+/*
  * current link status
  *@note
  * */
 typedef enum {
     LINK_DISCONNECTED = 0,
 	LINK_CONNECTED,
+	LINK_ENCRYPTED_REQUEST,
     LINK_ENCRYPTED,
     LINK_UNKNOW_STATUS
 } tuya_ble_link_status_t;
 
-/**
+/*
  * current connect status
  *@note
  * */
@@ -718,7 +857,7 @@ typedef enum {
     TUYA_BLE_AUTH_STATUS_PHASE_3,
 } tuya_ble_auth_status_t;
 
-/**
+/*
  * dp data  buffer:  (Dp_id,Dp_type,Dp_len,Dp_data),(Dp_id,Dp_type,Dp_len,Dp_data),....
  * */
 typedef struct {
@@ -726,7 +865,7 @@ typedef struct {
     uint16_t data_len;
 } tuya_ble_dp_write_data_t;
 
-/**
+/*
  * query dp point data,if data_len is 0,means query all dp point data,otherwise query the dp point in p_data buffer.
  * */
 typedef struct {
@@ -734,7 +873,7 @@ typedef struct {
     uint16_t data_len;
 } tuya_ble_dp_query_data_t;
 
-/**
+/*
 * dp data  buffer(Dp_len:2):  (Dp_id,Dp_type,Dp_len,Dp_data),(Dp_id,Dp_type,Dp_len,Dp_data),....
  * */
 typedef struct {
@@ -750,9 +889,19 @@ typedef struct {
     uint8_t *p_data;
 } tuya_ble_ota_data_t;
 
+typedef struct {
+    tuya_ble_ota_data_type_t type;
+    uint16_t data_len;
+    uint8_t *p_data;
+} tuya_ble_attachment_ota_data_t;
 
+typedef struct {
+    tuya_ble_file_data_type_t type;
+    uint16_t data_len;
+    uint8_t *p_data;
+} tuya_ble_file_data_t;
 
-/**
+/*
  * network data,unformatted json data,for example " {"wifi_ssid":"tuya","password":"12345678","token":"xxxxxxxxxx"} "
  * */
 typedef struct {
@@ -760,7 +909,7 @@ typedef struct {
     uint8_t *p_data;
 } tuya_ble_network_data_t;
 
-/**
+/*
  * wifi ssid data,unformatted json data,for example " {"wifi_ssid":"tuya","password":"12345678"} "
  * */
 typedef struct {
@@ -769,7 +918,7 @@ typedef struct {
 } tuya_ble_wifi_ssid_data_t;
 
 
-/**
+/*
  * uninx timestamp
  * */
 typedef struct {
@@ -778,7 +927,7 @@ typedef struct {
 } tuya_ble_timestamp_data_t;
 
 
-/**
+/*
  * normal time formatted
  * */
 typedef struct {
@@ -792,7 +941,7 @@ typedef struct {
     int16_t time_zone;   //actual time zone Multiply by 100.
 } tuya_ble_time_noraml_data_t;
 
-/**
+/*
  * normal time formatted
  * */
 typedef struct{
@@ -803,21 +952,21 @@ typedef struct{
 	uint16_t data_len;	  /**< dst data length. */
 }tuya_ble_timestamp_with_dst_data_t;
 
-/**
+/*
  *
  * */
 typedef struct {
     uint8_t status;
 } tuya_ble_dp_data_report_response_t;
 
-/**
+/*
  *
  * */
 typedef struct {
     uint8_t status;
 } tuya_ble_dp_data_with_time_report_response_t;
 
-/**
+/*
  *
  * */
 typedef struct {
@@ -826,7 +975,7 @@ typedef struct {
     uint8_t status;
 } tuya_ble_dp_data_with_flag_report_response_t;
 
-/**
+/*
  *
  * */
 typedef struct {
@@ -835,7 +984,7 @@ typedef struct {
     uint8_t status;
 } tuya_ble_dp_data_with_flag_and_time_report_response_t;
 
-/**
+/*
  *
  * */
 typedef struct {
@@ -846,7 +995,7 @@ typedef struct {
     uint8_t status;  // 0 - succeed, 1- failed.
 } tuya_ble_dp_data_send_response_data_t;
 
-/**
+/*
  *
  * */
 typedef struct {
@@ -858,28 +1007,28 @@ typedef struct {
 } tuya_ble_dp_data_with_time_send_response_data_t;
 
 
-/**
+/*
  *
  * */
 typedef struct {
     uint8_t data;
 } tuya_ble_unbound_data_t;
 
-/**
+/*
  *
  * */
 typedef struct {
     uint8_t data;
 } tuya_ble_anomaly_unbound_data_t;
 
-/**
+/*
  *
  * */
 typedef struct {
     uint8_t data;
 } tuya_ble_device_reset_data_t;
 
-/**
+/*
  * 
  * */
 typedef struct{
@@ -899,7 +1048,54 @@ typedef struct{
 }tuya_ble_weather_data_received_data_t;
 
 
+/*
+ * 
+ * */
+typedef struct{
+	uint16_t scene_cmd;		/**< scene cmd. 1- scene data. 2-scene control */
+	uint8_t status;			/**< response status, 0-success 1-failed. */
+	uint32_t err_code;		/**< err code. */
+}tuya_ble_scene_req_response_t;
+
+
 /**
+ * received scene list data 
+ * 
+ */
+typedef struct{
+	uint8_t status;			/**< status, 0-success 1-failed. */
+	uint32_t err_code;		/**< err code. */
+	bool need_update;		/**< need update. */
+	uint32_t check_code;	/**< scene data check code, used crc32. */
+	
+	uint8_t *p_data;		/**< scene data. */
+	uint16_t data_len;		/**< scene data length. */
+}tuya_ble_scene_data_received_data_t;
+
+
+/**
+ * received scene control result
+ * 
+ */
+typedef struct{
+	uint8_t status;			/**< status, 0-success 1-failed. */
+	uint32_t err_code;		/**< err code. */
+	uint8_t scene_id_len;	/**< scene id length. */
+	uint8_t *p_scene_id;	/**< scene id. */
+}tuya_ble_scene_ctrl_received_data_t;
+
+
+/**
+ * received ext module active info
+ * 
+ */
+typedef struct{
+	uint8_t *p_data;		/**< ext module active data. */	
+	uint16_t data_len;		/**< active data length. */
+}tuya_ble_ext_module_active_data_t;
+
+
+/*
  *
  * */
 typedef struct {
@@ -916,7 +1112,7 @@ typedef enum {
     RESET_TYPE_FACTORY_RESET,
 } tuya_ble_reset_type_t;
 
-/**
+/*
  *
  * */
 typedef struct {
@@ -924,7 +1120,196 @@ typedef struct {
     uint8_t status;     //0-succeed,1-failed.
 } tuya_ble_unbind_reset_response_data_t;
 
-/**
+
+typedef enum {
+    SpeechState_IDLE = 0,
+    SpeechState_LISTENING = 1,
+    SpeechState_PROCESSING = 2,
+    SpeechState_SPEAKING = 3,
+	SpeechState_Result_Data = 4
+} tuya_ble_speech_state_t;
+
+/*
+ *
+ * */
+typedef struct {
+    tuya_ble_speech_state_t state;
+    uint32_t data_length;
+	uint8_t  *p_data;
+} tuya_ble_speech_state_data_t;
+
+
+typedef enum {
+    AVS_SPEECH_CMD = 0,
+    AVS_SPEECH_CMD_RESPONSE = 1,
+} tuya_ble_avs_speech_cmd_t;
+
+typedef enum {
+    AVS_SPEECH_CMD_ENDPOINT= 0,
+    AVS_SPEECH_CMD_STOP = 1,
+    AVS_SPEECH_CMD_PROVIDE = 2,		
+} tuya_ble_avs_speech_cmd_type_t;
+
+typedef enum {
+    AVS_SPEECH_CMD_RES_START= 0,
+	AVS_SPEECH_CMD_RES_STOP = 1,	
+} tuya_ble_avs_speech_cmd_response_type_t;
+
+typedef struct {
+    tuya_ble_avs_speech_cmd_type_t	type;
+	uint8_t err_code;
+} tuya_ble_avs_speech_cmd_data_t;
+
+typedef struct {
+    tuya_ble_avs_speech_cmd_response_type_t	type;
+	uint8_t status;
+} tuya_ble_avs_speech_cmd_response_data_t;
+
+
+typedef struct {
+	tuya_ble_avs_speech_cmd_t cmd;
+	union {
+		tuya_ble_avs_speech_cmd_data_t cmd_data;
+		tuya_ble_avs_speech_cmd_response_data_t res_data;
+	};
+	
+}tuya_ble_avs_speech_cmd_event_data_t;
+
+
+typedef enum {
+	TUYA_TEMPERATURE_UNIT_CELSIUS = 0,
+	TUYA_TEMPERATURE_UNIT_FAHRENHEIT = 1,
+}tuya_vos_temperature_unit_type_t;
+
+
+typedef struct {
+	uint8_t length;
+	int16_t weather_type;
+	int16_t temperature_min;
+	int16_t temperature_max;
+	uint8_t date_length;
+	uint8_t *p_date;
+	uint8_t day_length;
+	uint8_t *p_day;	
+	uint8_t weather_description_length;
+	uint8_t *p_weather_description;
+}tuya_vos_daily_weather_data_type_t;
+
+
+typedef struct {
+	uint8_t length;
+	uint8_t flag;  
+	int16_t weather_type;
+	int16_t temperature_current;
+	int16_t temperature_min;
+	int16_t temperature_max;
+	uint8_t tts_length;
+	uint8_t *p_tts;
+	uint8_t weather_description_length;
+	uint8_t *p_weather_description;
+}tuya_vos_query_day_weather_data_type_t;
+
+
+typedef struct {
+	uint8_t main_title_length;         /**< Length of main title. */
+	uint8_t *p_main_title;             /**< Main title. */
+	uint8_t sub_title_length;
+	uint8_t *p_sub_title;
+	tuya_vos_temperature_unit_type_t temperature_unit;
+    uint8_t weather_days;
+    tuya_vos_query_day_weather_data_type_t 	query_day_weather_data;
+	tuya_vos_daily_weather_data_type_t  daily_weather_data[7];
+}tuya_vos_weather_data_type_t;
+
+
+typedef struct {
+	tuya_vos_weather_data_type_t *p_weather_data;
+}tuya_avs_weather_data_t;
+
+
+typedef struct {
+	uint8_t left_text_length;
+	uint8_t *p_left_text;
+	uint8_t right_text_length;
+	uint8_t *p_right_text;	
+}tuya_vos_list_content_data_type_t;
+
+
+typedef struct {
+	uint8_t main_title_length;
+	uint8_t *p_main_title;
+	uint8_t sub_title_length;
+	uint8_t *p_sub_title;
+    uint8_t list_number;
+	tuya_vos_list_content_data_type_t  list_content_data[64];
+}tuya_vos_list_data_type_t;
+
+
+typedef struct {
+	tuya_vos_list_data_type_t *p_list_data;
+}tuya_avs_list_data_t;
+
+
+typedef enum {
+	TUYA_VOS_TIMER_SET = 0,
+	TUYA_VOS_TIMER_CANCEL = 1,
+}tuya_vos_timer_cmd_t;
+
+
+typedef enum {
+	TUYA_VOS_TIMER_TIMER = 0,
+	TUYA_VOS_TIMER_ALARM = 1,
+	TUYA_VOS_TIMER_REMINDER = 2,
+}tuya_vos_timer_type_t;
+
+
+typedef struct {
+	tuya_vos_timer_type_t type;
+	uint8_t token_md5[16];
+	uint32_t time;
+	uint8_t loop_count;
+	uint32_t loop_count_pause_time;//ms
+	uint16_t reminder_text_length;
+	uint8_t  *p_reminder_text;	
+}tuya_vos_timer_set_data_t;
+
+
+typedef struct {
+	tuya_vos_timer_type_t type;
+	uint8_t token_md5[16];
+}tuya_vos_timer_cancel_data_t;
+
+
+typedef struct {
+	tuya_vos_timer_set_data_t *p_timer_set_data;
+}tuya_avs_timer_set_data_t;
+
+
+typedef struct {
+	tuya_vos_timer_cancel_data_t *p_timer_cancel_data;
+}tuya_avs_timer_cancel_data_t;
+
+
+typedef struct {
+	tuya_vos_timer_cmd_t cmd;
+	tuya_vos_timer_type_t type;
+	uint8_t token_md5[16];
+	uint8_t status;
+}tuya_avs_timer_response_data_t;
+
+
+typedef enum {
+	TUYA_AVS_NOTIFICATIONS_INDICATOR_SET = 1,
+	TUYA_AVS_NOTIFICATIONS_INDICATOR_CLEAR = 2,
+}tuya_avs_notifications_indicator_type_t;
+
+typedef struct {
+	tuya_avs_notifications_indicator_type_t cmd;
+	uint8_t persist_visual_indicator; /**< Specifies if your product must display a persistent visual indicator (if applicable) after handling this directive.It is valid only when cmd is TUYA_AVS_NOTIFICATIONS_INDICATOR_SET. */
+	uint8_t play_audio_indicator;     /**< Specifies if your product must play an audio indicator when this directive is handled.It is valid only when cmd is TUYA_AVS_NOTIFICATIONS_INDICATOR_SET. */
+}tuya_avs_notifications_indicator_data_t;
+
+/*
  * tuya ble sdk callback parameters union
  * */
 typedef struct {
@@ -955,11 +1340,27 @@ typedef struct {
         tuya_ble_unbind_reset_response_data_t reset_response_data;
 		tuya_ble_weather_data_req_response_t weather_req_response_data;
 		tuya_ble_weather_data_received_data_t weather_received_data;
+		
+		tuya_ble_scene_req_response_t scene_req_response_data;
+		tuya_ble_scene_data_received_data_t scene_data_received_data;
+		tuya_ble_scene_ctrl_received_data_t scene_ctrl_received_data;
+		
+		tuya_ble_speech_state_data_t speech_state_data;
+		tuya_avs_weather_data_t      avs_weather_data;
+		tuya_avs_list_data_t         avs_list_data;
+		tuya_ble_avs_speech_cmd_event_data_t avs_cmd_event_data;
+		tuya_avs_timer_set_data_t avs_timer_set_data;
+		tuya_avs_timer_cancel_data_t avs_timer_cancel_data;
+		tuya_avs_notifications_indicator_data_t avs_notifications_data;
+		tuya_ble_attachment_ota_data_t attachment_data;
+		
+		tuya_ble_file_data_t file_data;
+		tuya_ble_ext_module_active_data_t ext_module_active_data;
     };
 } tuya_ble_cb_evt_param_t;
 
 
-/** TIMER related */
+/* TIMER related */
 typedef void *tuya_ble_timer_t;
 
 typedef void (*tuya_ble_timer_handler_t)(void*);
@@ -1018,7 +1419,7 @@ typedef struct
     uint8_t pid_len;
     uint8_t pid[TUYA_BLE_PRODUCT_ID_MAX_LEN];
 	uint8_t adv_local_name_len;
-	uint8_t adv_local_name[TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN];
+	uint8_t adv_local_name[TUYA_BLE_ADV_LOCAL_NAME_MAX_SPACE_LEN];
 } tuya_ble_parameters_settings_t;
 
 

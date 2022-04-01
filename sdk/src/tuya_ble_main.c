@@ -245,7 +245,7 @@ uint8_t tuya_ble_custom_event_send(tuya_ble_custom_evt_t evt)
     event.hdr.event = TUYA_BLE_EVT_CUSTOM;
     event.custom_evt = evt;
 
-#if TUYA_BLE_SELT_BUILT_TASK
+#if TUYA_BLE_SELF_BUILT_TASK
     if(tuya_ble_os_msg_queue_send(tuya_ble_queue_handle, &event, 0))
     {
         return 0;
@@ -316,6 +316,18 @@ tuya_ble_status_t tuya_ble_inter_event_response(tuya_ble_cb_evt_param_t *param)
             tuya_ble_free(param->ota_data.p_data);
         }
         break;
+	case TUYA_BLE_CB_EVT_FILE_DATA:
+        if(param->file_data.p_data)
+        {
+            tuya_ble_free(param->file_data.p_data);
+        }
+        break;	
+	case TUYA_BLE_CB_EVT_ATTACHMENT_OTA_DATA:
+        if(param->attachment_data.p_data)
+        {
+            tuya_ble_free(param->attachment_data.p_data);
+        }
+        break;	
     case TUYA_BLE_CB_EVT_NETWORK_INFO:
         if(param->network_data.p_data)
         {
@@ -332,14 +344,14 @@ tuya_ble_status_t tuya_ble_inter_event_response(tuya_ble_cb_evt_param_t *param)
         break;
     case TUYA_BLE_CB_EVT_TIME_NORMAL:
         break;
-	case TUYA_BLE_CB_EVT_APP_LOCAL_TIME_NORMAL:
-		break;
-	case TUYA_BLE_CB_EVT_TIME_STAMP_WITH_DST:
-		if(param->timestamp_with_dst_data.p_data)
+    case TUYA_BLE_CB_EVT_APP_LOCAL_TIME_NORMAL:
+        break;
+    case TUYA_BLE_CB_EVT_TIME_STAMP_WITH_DST:
+        if(param->timestamp_with_dst_data.p_data)
         {
             tuya_ble_free(param->timestamp_with_dst_data.p_data);
         }
-		break;
+        break;
     case TUYA_BLE_CB_EVT_DATA_PASSTHROUGH:
 
         if(param->ble_passthrough_data.p_data)
@@ -353,6 +365,52 @@ tuya_ble_status_t tuya_ble_inter_event_response(tuya_ble_cb_evt_param_t *param)
         {
             tuya_ble_free(param->weather_received_data.p_data);
         }
+        break;
+#endif
+
+#if ( (TUYA_BLE_FEATURE_IOT_CHANNEL_ENABLE != 0) && (TUYA_BLE_FEATURE_SCENE_ENABLE != 0) )
+    case TUYA_BLE_CB_EVT_SCENE_DATA_RECEIVED:
+        if(param->scene_data_received_data.p_data)
+        {
+            tuya_ble_free(param->scene_data_received_data.p_data);
+        }
+        break;
+    case TUYA_BLE_CB_EVT_SCENE_CTRL_RESULT_RECEIVED:
+        if(param->scene_ctrl_received_data.p_scene_id)
+        {
+            tuya_ble_free(param->scene_ctrl_received_data.p_scene_id);
+        }
+        break;
+#endif
+#if ( TUYA_BLE_FEATURE_EXT_MODULE_ENABLE != 0 )
+	case TUYA_BLE_CB_EVT_QUERY_EXT_MODULE_DEV_INFO:
+		break;
+	
+	case TUYA_BLE_CB_EVT_EXT_MODULE_ACTIVE_INFO_RECEIVED:
+		if(param->ext_module_active_data.p_data)
+        {
+            tuya_ble_free(param->ext_module_active_data.p_data);
+        }
+		break;
+#endif
+#if (TUYA_BLE_VOS_ENABLE)
+    case TUYA_BLE_CB_EVT_AVS_SPEECH_STATE:
+        if(param->speech_state_data.state == SpeechState_Result_Data)
+        {
+            tuya_ble_free(param->speech_state_data.p_data);
+        }
+        break;
+    case TUYA_BLE_CB_EVT_AVS_SPEECH_WEATHER_DATA:
+        tuya_ble_free((uint8_t *)param->avs_weather_data.p_weather_data);
+        break;
+    case TUYA_BLE_CB_EVT_AVS_SPEECH_LIST_DATA:
+        tuya_ble_free((uint8_t *)param->avs_list_data.p_list_data);
+        break;
+    case TUYA_BLE_CB_EVT_AVS_SPEECH_TIMER_SET_DATA:
+        tuya_ble_free((uint8_t *)param->avs_timer_set_data.p_timer_set_data);
+        break;
+	case TUYA_BLE_CB_EVT_AVS_SPEECH_TIMER_CANCEL_DATA:
+        tuya_ble_free((uint8_t *)param->avs_timer_cancel_data.p_timer_cancel_data);
         break;
 #endif
     default:
@@ -416,7 +474,7 @@ static const uint8_t adv_data_const[TUYA_BLE_ADV_DATA_LEN_MAX] =
 
 #define TUYA_BLE_SCAN_RSP_DATA_LEN_MAX  31
 static const uint8_t scan_rsp_data_const[TUYA_BLE_SCAN_RSP_DATA_LEN_MAX] =
-{   
+{
     0x17,             // length
     0xFF,
     0xD0,
@@ -425,7 +483,7 @@ static const uint8_t scan_rsp_data_const[TUYA_BLE_SCAN_RSP_DATA_LEN_MAX] =
     0x00,0x00, //communication way bit0-mesh bit1-wifi bit2-zigbee bit3-NB
     0x00, //FLAG
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x03, //24
+    0x03, //24
     0x09,
     0x54, 0x59,
 };
@@ -441,11 +499,14 @@ uint8_t tuya_ble_get_adv_connect_request_bit_status(void)
 void tuya_ble_adv_change(void)
 {
     uint8_t *aes_buf = NULL;
+#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE	
     uint8_t *p_buf = NULL;
+#endif
     uint8_t adv_data_length = 0;
     uint8_t scan_rsp_data_length = 0;
     uint8_t aes_key[16];
     uint8_t encry_device_id[DEVICE_ID_LEN];
+	uint8_t mac_temp[MAC_LEN];
 
     memcpy(adv_data,adv_data_const,TUYA_BLE_ADV_DATA_LEN_MAX);
     memcpy(&scan_rsp_data,scan_rsp_data_const,TUYA_BLE_SCAN_RSP_DATA_LEN_MAX);
@@ -497,9 +558,10 @@ void tuya_ble_adv_change(void)
     {
         adv_data[11] |=0x08 ;
         //
-        memcpy(aes_key,tuya_ble_current_para.sys_settings.login_key,LOGIN_KEY_LEN);
+		memcpy(aes_key,tuya_ble_current_para.sys_settings.login_key,LOGIN_KEY_LEN);
         memcpy(aes_key+LOGIN_KEY_LEN,tuya_ble_current_para.auth_settings.device_id,16-LOGIN_KEY_LEN);
 
+		
         aes_buf = tuya_ble_malloc(200);
 
         if(aes_buf==NULL)
@@ -532,25 +594,50 @@ void tuya_ble_adv_change(void)
 
         memcpy(&scan_rsp_data[8],encry_device_id,DEVICE_ID_LEN);
     }
+
+    if(tuya_ble_current_para.adv_local_name_len>TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN)
+    {
+        tuya_ble_current_para.adv_local_name_len = TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN;
+    }
 	
-	if(tuya_ble_current_para.adv_local_name_len>TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN)
-	{
-		tuya_ble_current_para.adv_local_name_len = TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN;
+#if ((TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_V2)||(TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_ADVANCED_ENCRYPTION_V2)\
+||(TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_FOR_QR_CODE_V2))
+	
+    scan_rsp_data[0] = 0x0E;
+    scan_rsp_data[8] &=(~0x03); //flag2 bit1-bit0:00
+    memcpy(mac_temp,tuya_ble_current_para.auth_settings.mac,MAC_LEN);
+    tuya_ble_inverted_array(mac_temp,MAC_LEN);
+    memcpy(&scan_rsp_data[9],mac_temp,MAC_LEN);
+
+    if(tuya_ble_current_para.adv_local_name_len>0)
+    {
+        scan_rsp_data[15] = tuya_ble_current_para.adv_local_name_len + 1;
+        scan_rsp_data[16] = 0x09;
+        memset(&scan_rsp_data[17],0x00,TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN);
+        memcpy(&scan_rsp_data[17],tuya_ble_current_para.adv_local_name,tuya_ble_current_para.adv_local_name_len);
+    }
+    adv_data_length = tuya_ble_current_para.pid_len+15;
+    scan_rsp_data_length = (tuya_ble_current_para.adv_local_name_len==0?(-2):tuya_ble_current_para.adv_local_name_len)+17;
+
+#else	
+
+    if(tuya_ble_current_para.adv_local_name_len>0)
+    {
+		scan_rsp_data[24] = tuya_ble_current_para.adv_local_name_len + 1;
+		scan_rsp_data[25] = 0x09;
+		memcpy(&scan_rsp_data[26],tuya_ble_current_para.adv_local_name,tuya_ble_current_para.adv_local_name_len);
 	}
-	scan_rsp_data[24] = tuya_ble_current_para.adv_local_name_len + 1;
-	scan_rsp_data[25] = 0x09;
-	memcpy(&scan_rsp_data[26],tuya_ble_current_para.adv_local_name,tuya_ble_current_para.adv_local_name_len);
+    adv_data_length = tuya_ble_current_para.pid_len+15;
+	scan_rsp_data_length = (tuya_ble_current_para.adv_local_name_len==0?(-2):tuya_ble_current_para.adv_local_name_len)+26;
 	
-    TUYA_BLE_LOG_INFO("adv data changed ,current bound flag = %d",tuya_ble_current_para.sys_settings.bound_flag);
-	
-	adv_data_length = tuya_ble_current_para.pid_len+15;
-    scan_rsp_data_length = tuya_ble_current_para.adv_local_name_len+26;
-	
+#endif
+
+	TUYA_BLE_LOG_INFO("adv data changed ,current bound flag = %d",tuya_ble_current_para.sys_settings.bound_flag);
     tuya_ble_gap_advertising_adv_data_update(adv_data,adv_data_length);
     tuya_ble_gap_advertising_scan_rsp_data_update(scan_rsp_data,scan_rsp_data_length);
 
-#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE	
-    
+#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE
+
     p_buf = tuya_ble_malloc(adv_data_length + scan_rsp_data_length + 3);
     if(p_buf==NULL)
     {
@@ -568,19 +655,22 @@ void tuya_ble_adv_change(void)
 
     tuya_ble_device_info_characteristic_value_update(p_buf,(adv_data_length + scan_rsp_data_length + 3));
 
-	tuya_ble_free(p_buf);
+    tuya_ble_free(p_buf);
 #endif
-	
+
 }
 
 void tuya_ble_adv_change_with_connecting_request(void)
 {
     uint8_t *aes_buf = NULL;
-	uint8_t *p_buf = NULL;
+#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE	
+    uint8_t *p_buf = NULL;
+#endif
     uint8_t adv_data_length = 0;
     uint8_t scan_rsp_data_length = 0;
     uint8_t aes_key[16];
     uint8_t encry_device_id[DEVICE_ID_LEN];
+	uint8_t mac_temp[MAC_LEN];
 
     memcpy(adv_data,adv_data_const,TUYA_BLE_ADV_DATA_LEN_MAX);
     memcpy(&scan_rsp_data,scan_rsp_data_const,TUYA_BLE_SCAN_RSP_DATA_LEN_MAX);
@@ -632,8 +722,9 @@ void tuya_ble_adv_change_with_connecting_request(void)
     {
         adv_data[11] |=0x08 ;
         //
-        memcpy(aes_key,tuya_ble_current_para.sys_settings.login_key,LOGIN_KEY_LEN);
+		memcpy(aes_key,tuya_ble_current_para.sys_settings.login_key,LOGIN_KEY_LEN);
         memcpy(aes_key+LOGIN_KEY_LEN,tuya_ble_current_para.auth_settings.device_id,16-LOGIN_KEY_LEN);
+
 
         aes_buf = tuya_ble_malloc(200);
 
@@ -667,24 +758,49 @@ void tuya_ble_adv_change_with_connecting_request(void)
 
         memcpy(&scan_rsp_data[8],encry_device_id,DEVICE_ID_LEN);
     }
+
+    if(tuya_ble_current_para.adv_local_name_len>TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN)
+    {
+        tuya_ble_current_para.adv_local_name_len = TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN;
+    }
 	
-	if(tuya_ble_current_para.adv_local_name_len>TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN)
-	{
-		tuya_ble_current_para.adv_local_name_len = TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN;
+#if ((TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_V2)||(TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_ADVANCED_ENCRYPTION_V2)\
+||(TUYA_BLE_SECURE_CONNECTION_TYPE==TUYA_BLE_SECURE_CONNECTION_WITH_AUTH_KEY_FOR_QR_CODE_V2))
+	
+    scan_rsp_data[0] = 0x0E;
+    scan_rsp_data[8] &=(~0x03); //flag2 bit1-bit0:00
+    memcpy(mac_temp,tuya_ble_current_para.auth_settings.mac,MAC_LEN);
+    tuya_ble_inverted_array(mac_temp,MAC_LEN);
+    memcpy(&scan_rsp_data[9],mac_temp,MAC_LEN);
+
+    if(tuya_ble_current_para.adv_local_name_len>0)
+    {
+        scan_rsp_data[15] = tuya_ble_current_para.adv_local_name_len + 1;
+        scan_rsp_data[16] = 0x09;
+        memset(&scan_rsp_data[17],0x00,TUYA_BLE_ADV_LOCAL_NAME_MAX_LEN);
+        memcpy(&scan_rsp_data[17],tuya_ble_current_para.adv_local_name,tuya_ble_current_para.adv_local_name_len);
+    }
+    adv_data_length = tuya_ble_current_para.pid_len+15;
+    scan_rsp_data_length = (tuya_ble_current_para.adv_local_name_len==0?(-2):tuya_ble_current_para.adv_local_name_len)+17;
+
+#else	
+
+    if(tuya_ble_current_para.adv_local_name_len>0)
+    {
+		scan_rsp_data[24] = tuya_ble_current_para.adv_local_name_len + 1;
+		scan_rsp_data[25] = 0x09;
+		memcpy(&scan_rsp_data[26],tuya_ble_current_para.adv_local_name,tuya_ble_current_para.adv_local_name_len);
 	}
-	scan_rsp_data[24] = tuya_ble_current_para.adv_local_name_len + 1;
-	scan_rsp_data[25] = 0x09;
-	memcpy(&scan_rsp_data[26],tuya_ble_current_para.adv_local_name,tuya_ble_current_para.adv_local_name_len);
+    adv_data_length = tuya_ble_current_para.pid_len+15;
+	scan_rsp_data_length = (tuya_ble_current_para.adv_local_name_len==0?(-2):tuya_ble_current_para.adv_local_name_len)+26;
 	
-    TUYA_BLE_LOG_INFO("adv data changed ,current bound flag = %d",tuya_ble_current_para.sys_settings.bound_flag);
-	
-	adv_data_length = tuya_ble_current_para.pid_len+15;
-    scan_rsp_data_length = tuya_ble_current_para.adv_local_name_len+26;
-	
+#endif
+
+	TUYA_BLE_LOG_INFO("adv data changed ,current bound flag = %d",tuya_ble_current_para.sys_settings.bound_flag);	
     tuya_ble_gap_advertising_adv_data_update(adv_data,adv_data_length);
     tuya_ble_gap_advertising_scan_rsp_data_update(scan_rsp_data,scan_rsp_data_length);
 
-#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE	
+#if TUYA_BLE_LINK_LAYER_ENCRYPTION_SUPPORT_ENABLE
 
     p_buf = tuya_ble_malloc(adv_data_length + scan_rsp_data_length + 3);
     if(p_buf==NULL)
@@ -703,10 +819,10 @@ void tuya_ble_adv_change_with_connecting_request(void)
 
     tuya_ble_device_info_characteristic_value_update(p_buf,(adv_data_length + scan_rsp_data_length + 3));
 
-	tuya_ble_free(p_buf);
-	
+    tuya_ble_free(p_buf);
+
 #endif
-	
+
 }
 
 #endif

@@ -42,6 +42,10 @@
 #include "cJSON.h"
 #endif
 
+#if (TUYA_BLE_USE_PLATFORM_MEMORY_HEAP==0)
+#include "tuya_ble_heap.h"
+#endif
+
 static uint8_t m_callback_numbers = 0;
 
 #if TUYA_BLE_USE_OS
@@ -201,6 +205,7 @@ tuya_ble_status_t tuya_ble_gatt_receive_data(uint8_t *p_data,uint16_t len)
         event.mtu_data.p_data =(uint8_t *)tuya_ble_malloc(event.mtu_data.len);
         if(event.mtu_data.p_data==NULL)
         {
+			TUYA_BLE_LOG_ERROR("tuya_ble_gatt_receive_data-> MTU Data malloc failed.");
             return TUYA_BLE_ERR_NO_MEM;
         }
         memcpy(event.mtu_data.p_data,p_data,event.mtu_data.len);
@@ -390,7 +395,6 @@ tuya_ble_status_t tuya_ble_common_uart_send_full_instruction_received(uint8_t *p
 {
     tuya_ble_status_t ret = TUYA_BLE_SUCCESS;
     tuya_ble_evt_param_t event;
-    uint16_t rev_len,data_len;
     uint8_t* uart_evt_buffer;
 
     if(len<7)
@@ -1418,6 +1422,20 @@ tuya_ble_status_t tuya_ble_ota_response(tuya_ble_ota_response_t *p_data)
     return TUYA_BLE_SUCCESS;
 }
 
+/*
+ *@brief
+ *@param
+ *
+ *@note
+ *
+ * */
+
+tuya_ble_status_t tuya_ble_attachment_ota_response(tuya_ble_attachment_ota_response_t *p_data)
+{
+    return tuya_ble_ota_response(p_data);
+}
+
+
 #if (TUYA_BLE_PROTOCOL_VERSION_HIGN >= 3)
 /*
  *@brief
@@ -1521,6 +1539,89 @@ void tuya_ble_link_encrypted_handler(void)
 
 #endif
 
+/**
+ * @brief   Function for update br/edr status in Dual-Mode Bluetooth  device.
+ *
+ * @param   
+ *          [in]p_data  : pointer to br/edr information data.
+ *          
+ * @note    
+ *.
+ * */
+#if TUYA_BLE_BR_EDR_SUPPORTED
+
+static void tuya_ble_handle_br_edr_data_info_update_evt(int32_t evt_id, void *data)
+{
+    tuya_ble_br_edr_data_info_t* p_res_data = (tuya_ble_br_edr_data_info_t*)data;
+	
+	(void)evt_id;
+	
+    TUYA_BLE_LOG_INFO("tuya_ble_handle_br_edr_data_info_update_evt.");
+   
+    tuya_ble_br_edr_data_info_update_internal(p_res_data);
+
+    if(p_res_data) 
+    {
+        tuya_ble_free((uint8_t*)p_res_data);
+    }
+}
+
+tuya_ble_status_t tuya_ble_br_edr_data_info_update(tuya_ble_br_edr_data_info_t *p_data)
+{
+    tuya_ble_custom_evt_t custom_evt;
+    tuya_ble_br_edr_data_info_t* p_res_data = NULL;
+    uint8_t * p_buffer = NULL;
+    
+    if ((p_data->name_len>sizeof(p_data->name))||(p_data->connect_status>=BR_EDR_UNKNOW_STATUS)||(p_data->is_paired>1))
+    {
+        return TUYA_BLE_ERR_INVALID_PARAM;
+    }
+          
+    p_buffer = tuya_ble_malloc(sizeof(tuya_ble_br_edr_data_info_t));
+        
+    if(p_buffer)
+    {
+        p_res_data = (tuya_ble_br_edr_data_info_t*)p_buffer;
+        memcpy(p_res_data,p_data,sizeof(tuya_ble_br_edr_data_info_t));
+    }
+    else
+    {
+       return TUYA_BLE_ERR_NO_MEM;
+    }
+    
+    custom_evt.evt_id = 0;//reserve
+    custom_evt.data = p_res_data;
+    custom_evt.custom_event_handler = tuya_ble_handle_br_edr_data_info_update_evt;
+    
+    if (tuya_ble_custom_event_send(custom_evt) != 0)
+    {
+        tuya_ble_free(p_buffer);
+        return TUYA_BLE_ERR_NO_EVENT;
+    }
+
+    return TUYA_BLE_SUCCESS;	
+}
+
+#endif
+
+/**
+ * @brief   Function for get free heap size.
+ *
+ * @param   
+ *          
+ *          
+ * @note    
+ *.
+ * */
+#if (TUYA_BLE_USE_PLATFORM_MEMORY_HEAP==0)
+
+uint32_t tuya_ble_get_free_heap_size(void)
+{
+	return xTuyaPortGetFreeHeapSize();
+}
+
+#endif
+
 /*
  *@brief
  *@param
@@ -1530,7 +1631,6 @@ void tuya_ble_link_encrypted_handler(void)
  * */
 tuya_ble_status_t tuya_ble_sdk_init(tuya_ble_device_param_t * param_data)
 {
-    tuya_ble_cb_evt_param_t event;
     uint8_t device_id_temp[16];
     uint8_t device_id_temp2[20];
     tuya_ble_gap_addr_t bt_addr;
@@ -1706,6 +1806,8 @@ tuya_ble_status_t tuya_ble_sdk_init(tuya_ble_device_param_t * param_data)
     }
 
     tuya_ble_set_device_version(param_data->firmware_version,param_data->hardware_version);
+	
+	tuya_ble_set_device_attachment_version(&param_data->attacnment_version);
 
     tuya_ble_set_external_mcu_version(0,0);//Initialize to 0
 

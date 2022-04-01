@@ -635,8 +635,8 @@ int32_t tuya_ble_ecc_key_pem2hex(const char *pem, uint8_t *key, uint16_t *key_le
 	char buf1[256] = {0};
 	char buf2[256] = {0};
 	uint16_t inlen = 0;
-	uint16_t i,j,k = 0;
-	uint16_t len,len1,len2 = 0;
+	uint16_t i = 0;
+	uint16_t len = 0,len1 = 0,len2 = 0;
 
 	if (NULL == pem)
 	    return 0;

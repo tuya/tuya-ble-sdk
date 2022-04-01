@@ -62,6 +62,17 @@ __TUYA_BLE_WEAK tuya_ble_status_t tuya_ble_device_info_characteristic_value_upda
 }
 
 /**
+ *@brief     Function for security request.  
+ *        
+ *@note      
+ *           
+ * */
+__TUYA_BLE_WEAK tuya_ble_status_t tuya_ble_link_security_request(void)
+{
+	return TUYA_BLE_SUCCESS;	
+}
+
+/**
  *@brief    
  *@param    
  *        
